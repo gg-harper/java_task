@@ -30,6 +30,7 @@ public class QuickSort {
 				greater.add(element);
 			}
 		}
+
 		list = quickSort(less);
 		list.add(pivot);
 		list.addAll(quickSort(greater));
