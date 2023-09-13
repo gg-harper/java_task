@@ -1,8 +1,6 @@
 import java.io.IOException;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
 import java.util.Scanner;
 
 public class Calculator {
@@ -11,16 +9,26 @@ public class Calculator {
         String nextElement;
         Double result = 0d;
         int valueCounter = 2;
+        boolean flag = true;
         Deque<String> expression = new ArrayDeque<>();
+        String previousOperator = "*";
 
+        expression.addLast("(");
         System.out.println("Enter first value: ");
         while (true) {
             nextElement = scanner.nextLine();
             if (nextElement.matches("=")) {
-                Runtime.getRuntime().exec("clear");
+                if (flag) {
+                    expression.removeFirst();
+                }
+                expression.addLast("=");
+                System.out.print("\033\143");
+//                Runtime.getRuntime().exec("clear");
+                expression.stream().forEach(System.out::print);
+                System.out.println("\n");
                 System.exit(0);
             }
-            if (expression.size() == 0) {
+            if (expression.size() == 1) {
                 if (!nextElement.matches("\\d") || nextElement.matches("")) {
                     System.out.println("Start with digit!");
                     continue;
@@ -30,17 +38,26 @@ public class Calculator {
                 result = Double.parseDouble(nextElement);
                 continue;
             }
-
+            if (!checkElement(expression.getLast(), nextElement)) {
+                System.out.println("Wrong symbol!");
+                continue;
+            }
 
             if (isOperator(nextElement)) {
+                if (previousOperatorLessPri(previousOperator, nextElement)) {
+                    expression.addLast(")");
+                    flag = false;
+                }
                 expression.addLast(nextElement);
+                previousOperator = nextElement;
                 System.out.printf("Enter %d value: ", valueCounter);
                 continue;
             }
             try {
                 result = calculate(result, expression.getLast(), nextElement);
             } catch (RuntimeException re) {
-                System.out.println(re.getMessage());System.out.printf("Enter %d value: ", valueCounter);
+                System.out.println(re.getMessage());
+                System.out.printf("Enter %d value: ", valueCounter);
                 continue;
             }
             System.out.println("Pre-result = " + result);
@@ -66,7 +83,7 @@ public class Calculator {
                 resultNumerical -= operandNumerical;
                 break;
             case "*":
-                resultNumerical *= (Double) operandNumerical;
+                resultNumerical *= operandNumerical;
                 break;
             case "/":
                 if (operandNumerical == 0) {
@@ -82,7 +99,6 @@ public class Calculator {
 
     private static Boolean checkElement(String previousElement, String element) {
         if (!element.matches("[\\d\\*\\+-/\\W]+")) {
-            System.out.println("Check 1. Wrong symbol!");
             return false;
         }
         if (element.matches("")) {
@@ -90,43 +106,12 @@ public class Calculator {
             return false;
         }
         if (isOperator(previousElement) && isOperator(element) || !isOperator(previousElement) && !isOperator(element)) {
-            System.out.println("Check 2. Wrong symbol!");
             return false;
         }
         return true;
     }
 
-    private static void printExpression(Deque<String> expression) {
-        boolean flag = false;
-        int idx = -1;
-        List<String> list = new ArrayList<>();
-        String previousOperator = "";
-        String operator = "";
-        for (int i = 1; i < expression.size(); i++) {
-            String element = expression.getFirst();
-            if (!flag && element.matches("\\D") && i != 0) {
-                list.add("(");
-                idx = i;
-                flag = true;
-            }
-            if (isOperator(element)) {
-                if (greaterOperatorPriority(element, previousOperator)) {
-                    list.add(")");
-                    flag = false;
-                    idx = -1;
-                } else {
-
-                }
-
-                previousOperator = element;
-            }
-        }
-        if (!flag) {
-            list.remove(idx);
-        }
-    }
-
-    private static Boolean greaterOperatorPriority(String operator, String previousOperator) {
+    private static Boolean previousOperatorLessPri (String previousOperator, String operator) {
         if (operator.matches("[\\*/]") && previousOperator.matches("[\\+-]")) {
             return true;
         }
